@@ -11,7 +11,7 @@ print(tk.TkVersion)
 class App(tk2.Tk):
     def __init__(self):
         super().__init__()
-        self.title("File Filter")
+        self.title("图片规格标记器")
         self.geometry("500x300")
         
         # Create widgets
@@ -21,10 +21,10 @@ class App(tk2.Tk):
         self.prefix_entry.insert(0, "款号")
         self.prefix_entry.pack()
         
-        self.folder_button = tk.Button(self, text="Select Folder", command=self.select_folder)
+        self.folder_button = tk.Button(self, text="选择文件夹", command=self.select_folder)
         self.folder_button.pack()
         
-        self.start_button = tk.Button(self, text="Start", command=self.filter_files)
+        self.start_button = tk.Button(self, text="开始", command=self.filter_files)
         self.start_button.pack()
         
         self.log_text = tk.Text(self)
@@ -78,9 +78,11 @@ class App(tk2.Tk):
                 if filename.lower().endswith('.jpg') or filename.lower().endswith('.jpeg') or filename.lower().endswith('.png'):
                     filepath = os.path.join(foldername, filename)
                     try:
-                        with Image.open(filepath) as im:
+                        fp = open(filepath, 'rb')
+                        with Image.open(fp) as im:
                             width, height = im.size
                             size = os.path.getsize(filepath)
+                            fp.close()
                             if (width != 1340 or height != 1785) and (width != 1200 or height != 1200) and (width != 80 or height != 80) and (size < 200000 or size > 2000000):
                                 # new_filename = f"{prefix}_not_match_{filename}"
                                 # os.rename(filepath, os.path.join(foldername, new_filename))
@@ -96,11 +98,13 @@ class App(tk2.Tk):
                             else:
                                 self.log_text.insert(tk.END, f'尺寸不匹配2 {filename} 规格： {width} x {height}\n')
                     except OSError as e:
+                        fp.close()
                         self.log_text.insert(tk.END, f'{filename} has a problem: {e}')
         
 if __name__ == "__main__":
     app = App()
-    if platform.system() == "Windows":
-        import py2exe
-        setup(console=["app.py"])
+    # if platform.system() == "Windows":
+    #     from distutils.core import setup
+    #     import py2exe
+    #     setup(console=["app.py"])
     app.mainloop()
