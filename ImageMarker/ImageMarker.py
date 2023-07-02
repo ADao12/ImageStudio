@@ -70,13 +70,8 @@ class App(tk2.Tk):
     def drag_and_drop_folder(self, event):
         if event.widget is self:
             if event.data:
-                folder_path = event.data.strip()
-                if os.path.isdir(folder_path):
-                    self.log_text.config(state=tk.NORMAL)
-                    self.log_text.insert(tk.END, f"拖拽文件夹: {folder_path}\n", self.folder_path_text_tag)
-                    self.log_text.config(state=tk.DISABLED)
-                    self.folder_path = folder_path
-                    self.relative_path = os.path.relpath(folder_path)
+                folder_path = event.data.strip().replace("{","").replace("}","")
+                self.init_folder(folder_path)
         else:
             event.widget.destroy()
 
@@ -84,13 +79,18 @@ class App(tk2.Tk):
 
     def select_folder(self):
         folder_path = filedialog.askdirectory(initialdir=os.getcwd())
+        self.init_folder(folder_path)
+    
+    def init_folder(self, folder_path):
+        self.folder_path = folder_path
         self.log_text.config(state=tk.NORMAL)
         self.log_text.insert(tk.END, f"选择文件夹: {folder_path}\n", self.folder_path_text_tag)
         self.log_text.config(state=tk.DISABLED)
+        self.relative_path = "/" + self.relpath(self.folder_path, ":/")
+        self.log_text.config(state=tk.NORMAL)
+        self.log_text.insert(tk.END, f"相对地址: {self.relative_path}\n", self.folder_path_text_tag)
         self.log_text.config(state=tk.DISABLED)
-        self.folder_path = folder_path
-        self.relative_path = os.path.relpath(folder_path)
-
+ 
     def process_files(self):
         folder_path = self.folder_path
         size1 = self.size1_entry.get()
@@ -104,7 +104,7 @@ class App(tk2.Tk):
                 # 检查文件类型是否为图片
                 if not filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                     filepath = os.path.join(root, filename)
-                    unprocessed_file_path = os.path.relpath(filepath, self.relative_path)
+                    unprocessed_file_path = self.relpath(filepath, self.relative_path)
                     self.log_text.config(state=tk.NORMAL)
                     self.log_text.insert(tk.END, f"无法处理的文件: {unprocessed_file_path}\n", self.unprocessed_file_text_tag)
                     self.log_text.config(state=tk.DISABLED)
@@ -116,7 +116,7 @@ class App(tk2.Tk):
                     with Image.open(filepath) as img:
                         width, height = img.size
                 except:
-                    unprocessed_file_path = os.path.relpath(filepath, self.relative_path)
+                    unprocessed_file_path = self.relpath(filepath, self.relative_path)
                     self.log_text.config(state=tk.NORMAL)
                     self.log_text.insert(tk.END, f"无法处理的文件: {unprocessed_file_path}\n", self.unprocessed_file_text_tag)
                     self.log_text.config(state=tk.DISABLED)
@@ -126,8 +126,8 @@ class App(tk2.Tk):
                     new_filename = filename.replace(os.path.splitext(filename)[0], filename1)
                     new_filepath = os.path.join(root, new_filename)
                     os.rename(filepath, new_filepath)
-                    old_path = os.path.relpath(filepath, self.relative_path)
-                    new_path = os.path.relpath(new_filepath, self.relative_path)
+                    old_path = self.relpath(filepath, self.relative_path)
+                    new_path = self.relpath(new_filepath, self.relative_path)
                     self.log_text.config(state=tk.NORMAL)
                     self.log_text.insert(tk.END, f"{old_path} --> {new_path}\n")
                     self.log_text.config(state=tk.DISABLED)
@@ -135,11 +135,18 @@ class App(tk2.Tk):
                     new_filename = filename.replace(os.path.splitext(filename)[0], filename2)
                     new_filepath = os.path.join(root, new_filename)
                     os.rename(filepath, new_filepath)
-                    old_path = os.path.relpath(filepath, self.relative_path)
-                    new_path = os.path.relpath(new_filepath, self.relative_path)
+                    old_path = self.relpath(filepath, self.relative_path)
+                    new_path = self.relpath(new_filepath, self.relative_path)
                     self.log_text.config(state=tk.NORMAL)
                     self.log_text.insert(tk.END, f"{old_path} --> {new_path}\n")
                     self.log_text.config(state=tk.DISABLED)
+    
+    def relpath(self, origin_path, relative_path):
+        new_path = origin_path.split(relative_path)[1]
+        # self.log_text.config(state=tk.NORMAL)
+        # self.log_text.insert(tk.END, f"{origin_path} del {relative_path} --> {new_path}\n")
+        # self.log_text.config(state=tk.DISABLED)
+        return new_path
 
 
 
